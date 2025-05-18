@@ -2,7 +2,7 @@
 import { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { BulbIcon } from 'lucide-react';
+import { Lightbulb } from 'lucide-react';
 
 const studyTips = [
   {
@@ -50,7 +50,7 @@ export function StudyTips() {
     <Card className="bg-study-100 dark:bg-study-900/20 border-study-200">
       <CardHeader className="pb-2">
         <div className="flex items-center space-x-2">
-          <BulbIcon className="h-5 w-5 text-yellow-500" />
+          <Lightbulb className="h-5 w-5 text-yellow-500" />
           <CardTitle className="text-lg">Study Tip</CardTitle>
         </div>
         <CardDescription>Improve your study effectiveness</CardDescription>
