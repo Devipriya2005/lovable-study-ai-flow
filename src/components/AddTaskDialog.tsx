@@ -1,6 +1,5 @@
-
 import { useState } from 'react';
-import { useTaskContext } from '../context/TaskContext';
+import { useTasks } from '../context/TaskContext';
 import { Task, TaskPriority, TaskStatus } from '../types/task';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -25,7 +24,7 @@ import { CalendarIcon, Plus } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 export function AddTaskDialog() {
-  const { addTask } = useTaskContext();
+  const { addTask } = useTasks();
   const [open, setOpen] = useState(false);
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');

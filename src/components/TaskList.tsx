@@ -1,7 +1,6 @@
-
 import { useState } from 'react';
 import { TaskCard } from './TaskCard';
-import { useTaskContext } from '../context/TaskContext';
+import { useTasks } from '../context/TaskContext';
 import { Task, TaskStatus } from '../types/task';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Input } from '@/components/ui/input';
@@ -16,7 +15,7 @@ import {
 import { Calendar, ListTodo, Calendar as CalendarIcon } from 'lucide-react';
 
 export function TaskList() {
-  const { tasks } = useTaskContext();
+  const { tasks } = useTasks();
   const [filter, setFilter] = useState<TaskStatus | 'all'>('all');
   const [searchTerm, setSearchTerm] = useState('');
   const [sortBy, setSortBy] = useState<'dueDate' | 'priority' | 'subject'>('dueDate');

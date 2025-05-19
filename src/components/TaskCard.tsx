@@ -1,3 +1,4 @@
+
 import {
   Card,
   CardContent,
@@ -18,10 +19,22 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { MoreVertical, Pencil, Trash2 } from "lucide-react";
 import { Task } from "@/types/task";
-import { priorityMap, statusMap } from "@/lib/utils";
 import { useTasks } from "@/context/TaskContext";
 import { EditTaskDialog } from "./EditTaskDialog";
 import { toast } from "@/components/ui/sonner";
+
+// Create utility maps for priority and status
+const priorityMap = {
+  low: "Low",
+  medium: "Medium",
+  high: "High",
+};
+
+const statusMap = {
+  "not-started": "Not Started",
+  "in-progress": "In Progress",
+  completed: "Completed",
+};
 
 interface TaskCardProps {
   task: Task;
@@ -42,7 +55,7 @@ export function TaskCard({ task }: TaskCardProps) {
 
   const handleCheckboxChange = async (checked: boolean) => {
     try {
-      await updateTaskStatus(task.id, checked ? "completed" : "todo");
+      await updateTaskStatus(task.id, checked ? "completed" : "not-started");
       toast.success(`Task ${checked ? "completed" : "marked as To Do"}!`);
     } catch (error) {
       console.error("Failed to update task status:", error);
@@ -61,12 +74,7 @@ export function TaskCard({ task }: TaskCardProps) {
           <DropdownMenuContent align="end" forceMount>
             <DropdownMenuLabel>Actions</DropdownMenuLabel>
             <DropdownMenuItem>
-              <EditTaskDialog taskId={task.id}>
-                <div className="flex items-center space-x-2">
-                  <Pencil className="h-4 w-4" />
-                  <span>Edit</span>
-                </div>
-              </EditTaskDialog>
+              <EditTaskDialog task={task} />
             </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem onClick={handleDeleteTask}>

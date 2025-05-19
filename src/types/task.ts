@@ -7,7 +7,7 @@ export interface Task {
   title: string;
   description: string;
   subject: string;
-  dueDate: Date;
+  dueDate?: Date;
   priority: TaskPriority;
   status: TaskStatus;
   estimatedMinutes: number;

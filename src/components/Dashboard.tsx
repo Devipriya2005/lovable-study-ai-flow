@@ -1,12 +1,12 @@
 
-import { useTaskContext } from '../context/TaskContext';
+import { useTasks } from '../context/TaskContext';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { CheckCircle2, Clock, ListTodo, CalendarClock } from 'lucide-react';
 import { formatDate } from '@/utils/dateUtils';
 
 export function Dashboard() {
-  const { tasks } = useTaskContext();
+  const { tasks } = useTasks();
   
   // Calculate statistics
   const totalTasks = tasks.length;

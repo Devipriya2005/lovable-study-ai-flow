@@ -1,7 +1,6 @@
 
 import { createContext, useState, useContext, useEffect } from 'react';
-import { Task, TaskStatus } from '@/types/task';
-import { defaultTasks } from '@/data/defaultTasks';
+import { Task, TaskStatus, TaskPriority } from '@/types/task';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/components/ui/sonner';
 import { useAuth } from './AuthContext';
@@ -60,7 +59,7 @@ export const TaskProvider = ({ children }: { children: React.ReactNode }) => {
           description: task.description || '',
           subject: task.subject,
           status: task.status as TaskStatus,
-          priority: task.priority,
+          priority: task.priority as TaskPriority,
           dueDate: task.due_date ? new Date(task.due_date) : undefined,
           estimatedMinutes: task.estimated_minutes,
           completedMinutes: task.completed_minutes,
@@ -105,7 +104,7 @@ export const TaskProvider = ({ children }: { children: React.ReactNode }) => {
           description: data[0].description || '',
           subject: data[0].subject,
           status: data[0].status as TaskStatus,
-          priority: data[0].priority,
+          priority: data[0].priority as TaskPriority,
           dueDate: data[0].due_date ? new Date(data[0].due_date) : undefined,
           estimatedMinutes: data[0].estimated_minutes,
           completedMinutes: data[0].completed_minutes,
