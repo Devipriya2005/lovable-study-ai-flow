@@ -76,21 +76,22 @@ export const TaskProvider = ({ children }: { children: React.ReactNode }) => {
 
   const addTask = async (task: Omit<Task, 'id'>) => {
     try {
+      // Fix: Convert task to the format expected by Supabase
+      const taskData = {
+        title: task.title,
+        description: task.description,
+        subject: task.subject,
+        status: task.status,
+        priority: task.priority,
+        due_date: task.dueDate,
+        estimated_minutes: task.estimatedMinutes,
+        completed_minutes: task.completedMinutes,
+        user_id: user?.id
+      };
+
       const { data, error } = await supabase
         .from('tasks')
-        .insert([
-          {
-            title: task.title,
-            description: task.description,
-            subject: task.subject,
-            status: task.status,
-            priority: task.priority,
-            due_date: task.dueDate,
-            estimated_minutes: task.estimatedMinutes,
-            completed_minutes: task.completedMinutes,
-            user_id: user?.id,
-          }
-        ])
+        .insert(taskData) // Fixed: Pass a single object, not an array
         .select();
 
       if (error) {

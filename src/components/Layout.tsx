@@ -6,6 +6,7 @@ import { ModeToggle } from './ModeToggle';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '../context/AuthContext';
 import { LogOut, User } from 'lucide-react';
+import { TaskProvider } from '../context/TaskContext';
 
 interface LayoutProps {
   children: ReactNode;
@@ -24,7 +25,10 @@ export function Layout({ children }: LayoutProps) {
           <div className="flex items-center gap-4">
             {user ? (
               <>
-                <AddTaskDialog />
+                {/* Wrap AddTaskDialog with TaskProvider only when user is logged in */}
+                <TaskProvider>
+                  <AddTaskDialog />
+                </TaskProvider>
                 <div className="flex items-center gap-2">
                   <div className="flex items-center gap-2 px-3 py-1 bg-gray-100 dark:bg-gray-800 rounded-full text-sm">
                     <User size={16} />
