@@ -12,7 +12,7 @@ interface LayoutProps {
 }
 
 export function Layout({ children }: LayoutProps) {
-  const { user, signOut } = useAuth();
+  const { user, username, signOut } = useAuth();
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -28,7 +28,7 @@ export function Layout({ children }: LayoutProps) {
                 <div className="flex items-center gap-2">
                   <div className="flex items-center gap-2 px-3 py-1 bg-gray-100 dark:bg-gray-800 rounded-full text-sm">
                     <User size={16} />
-                    <span className="hidden sm:inline">{user.email}</span>
+                    <span className="hidden sm:inline">{username || user.email}</span>
                   </div>
                   <Button 
                     variant="outline" 

@@ -13,6 +13,7 @@ const Auth = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [username, setUsername] = useState('');
+  const [signinUsername, setSigninUsername] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -28,6 +29,7 @@ const Auth = () => {
     
     try {
       await signIn(email, password);
+      // Username is fetched in the signIn method
     } catch (error) {
       if (error instanceof Error) {
         setError(error.message);
@@ -89,6 +91,14 @@ const Auth = () => {
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
                       required
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Input
+                      type="username"
+                      placeholder="Username (optional)"
+                      value={signinUsername}
+                      onChange={(e) => setSigninUsername(e.target.value)}
                     />
                   </div>
                   <div className="space-y-2">

@@ -8,6 +8,7 @@ type AuthContextType = {
   user: User | null;
   session: Session | null;
   isLoading: boolean;
+  username: string | null;
   signIn: (email: string, password: string) => Promise<void>;
   signUp: (email: string, password: string, username?: string) => Promise<void>;
   signOut: () => Promise<void>;
@@ -27,6 +28,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [username, setUsername] = useState<string | null>(null);
 
   useEffect(() => {
     // Set up auth state listener FIRST
@@ -34,6 +36,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       (event, session) => {
         setSession(session);
         setUser(session?.user ?? null);
+        setUsername(session?.user?.user_metadata?.username || session?.user?.email || null);
       }
     );
 
@@ -41,6 +44,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
       setUser(session?.user ?? null);
+      setUsername(session?.user?.user_metadata?.username || session?.user?.email || null);
       setIsLoading(false);
     });
 
@@ -50,7 +54,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const signIn = async (email: string, password: string) => {
     try {
       setIsLoading(true);
-      const { error } = await supabase.auth.signInWithPassword({ 
+      const { error, data } = await supabase.auth.signInWithPassword({ 
         email, 
         password 
       });
@@ -58,6 +62,16 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       if (error) {
         toast.error(`Error signing in: ${error.message}`);
         throw error;
+      }
+
+      if (data?.user) {
+        const { data: profileData } = await supabase
+          .from('profiles')
+          .select('username')
+          .eq('id', data.user.id)
+          .single();
+          
+        setUsername(profileData?.username || data.user.email);
       }
 
       toast.success('Successfully signed in!');
@@ -77,7 +91,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         password,
         options: {
           data: {
-            username
+            username: username || email
           }
         }
       });
@@ -106,6 +120,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         throw error;
       }
       
+      setUsername(null);
       toast.success('Successfully signed out!');
     } catch (error) {
       console.error('Error signing out:', error);
@@ -119,6 +134,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     user,
     session,
     isLoading,
+    username,
     signIn,
     signUp,
     signOut
