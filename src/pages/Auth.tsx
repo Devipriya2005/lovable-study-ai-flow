@@ -12,6 +12,7 @@ const Auth = () => {
   const { user, isLoading, signIn, signUp } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [username, setUsername] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -44,7 +45,7 @@ const Auth = () => {
     setIsSubmitting(true);
     
     try {
-      await signUp(email, password);
+      await signUp(email, password, username);
     } catch (error) {
       if (error instanceof Error) {
         setError(error.message);
@@ -111,6 +112,15 @@ const Auth = () => {
               
               <TabsContent value="signup">
                 <form onSubmit={handleSignUp} className="space-y-4">
+                  <div className="space-y-2">
+                    <Input
+                      type="text"
+                      placeholder="Username"
+                      value={username}
+                      onChange={(e) => setUsername(e.target.value)}
+                      required
+                    />
+                  </div>
                   <div className="space-y-2">
                     <Input
                       type="email"

@@ -1,19 +1,17 @@
 
-import React, { createContext, useContext, useState, useEffect } from 'react';
-import { Task, TaskStatus, TaskPriority } from '../types/task';
-import { toast } from '@/components/ui/sonner';
+import { createContext, useContext, useState, useEffect } from 'react';
+import { Task, TaskPriority, TaskStatus } from '../types/task';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './AuthContext';
+import { toast } from '@/components/ui/sonner';
 
-interface TaskContextType {
+type TaskContextType = {
   tasks: Task[];
-  addTask: (task: Omit<Task, 'id'>) => void;
-  updateTask: (task: Task) => void;
-  deleteTask: (id: string) => void;
-  updateTaskStatus: (id: string, status: TaskStatus) => void;
-  updateTaskProgress: (id: string, completedMinutes: number) => void;
+  addTask: (task: Omit<Task, 'id' | 'createdAt' | 'updatedAt'>) => Promise<void>;
+  updateTask: (id: string, task: Partial<Task>) => Promise<void>;
+  deleteTask: (id: string) => Promise<void>;
   isLoading: boolean;
-}
+};
 
 const TaskContext = createContext<TaskContextType | undefined>(undefined);
 
@@ -25,125 +23,156 @@ export const useTaskContext = () => {
   return context;
 };
 
-export const TaskProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+export const TaskProvider = ({ children }: { children: React.ReactNode }) => {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const { user } = useAuth();
 
+  // Fetch tasks from Supabase when user changes
   useEffect(() => {
-    if (user) {
-      fetchTasks();
-    } else {
-      setTasks([]);
-      setIsLoading(false);
-    }
+    const fetchTasks = async () => {
+      if (!user) {
+        setTasks([]);
+        setIsLoading(false);
+        return;
+      }
+
+      try {
+        setIsLoading(true);
+        const { data, error } = await supabase
+          .from('tasks')
+          .select('*')
+          .eq('user_id', user.id);
+
+        if (error) {
+          throw error;
+        }
+
+        // Transform the data to match Task type
+        const transformedTasks = data.map((task: any) => ({
+          id: task.id,
+          title: task.title,
+          description: task.description,
+          subject: task.subject,
+          dueDate: task.due_date ? new Date(task.due_date) : null,
+          status: task.status as TaskStatus,
+          priority: task.priority as TaskPriority,
+          estimatedMinutes: task.estimated_minutes,
+          completedMinutes: task.completed_minutes,
+          createdAt: new Date(task.created_at),
+          updatedAt: new Date(task.updated_at)
+        }));
+
+        setTasks(transformedTasks);
+      } catch (error) {
+        console.error('Error fetching tasks:', error);
+        toast.error('Failed to fetch tasks');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchTasks();
   }, [user]);
 
-  const fetchTasks = async () => {
+  const addTask = async (task: Omit<Task, 'id' | 'createdAt' | 'updatedAt'>) => {
+    if (!user) return;
+    
     try {
       setIsLoading(true);
+      
+      // Transform task data to match Supabase schema
       const { data, error } = await supabase
         .from('tasks')
-        .select('*')
-        .order('created_at', { ascending: false });
+        .insert({
+          user_id: user.id,
+          title: task.title,
+          description: task.description,
+          subject: task.subject,
+          due_date: task.dueDate ? task.dueDate.toISOString() : null,
+          status: task.status,
+          priority: task.priority,
+          estimated_minutes: task.estimatedMinutes,
+          completed_minutes: task.completedMinutes
+        })
+        .select();
 
       if (error) {
         throw error;
       }
 
-      if (data) {
-        const formattedTasks: Task[] = data.map(task => ({
-          ...task,
-          id: task.id,
-          dueDate: task.due_date ? new Date(task.due_date) : new Date(),
-          priority: task.priority as TaskPriority,
-          status: task.status as TaskStatus,
-        }));
-        setTasks(formattedTasks);
+      // Transform the returned data to match Task type
+      if (data && data[0]) {
+        const newTask: Task = {
+          id: data[0].id,
+          title: data[0].title,
+          description: data[0].description,
+          subject: data[0].subject,
+          dueDate: data[0].due_date ? new Date(data[0].due_date) : null,
+          status: data[0].status as TaskStatus,
+          priority: data[0].priority as TaskPriority,
+          estimatedMinutes: data[0].estimated_minutes,
+          completedMinutes: data[0].completed_minutes,
+          createdAt: new Date(data[0].created_at),
+          updatedAt: new Date(data[0].updated_at)
+        };
+        
+        setTasks(prevTasks => [...prevTasks, newTask]);
+        toast.success('Task added successfully');
       }
     } catch (error) {
-      console.error('Error fetching tasks:', error);
-      toast.error('Failed to fetch tasks');
+      console.error('Error adding task:', error);
+      toast.error('Failed to add task');
     } finally {
       setIsLoading(false);
     }
   };
 
-  const addTask = async (task: Omit<Task, 'id'>) => {
+  const updateTask = async (id: string, taskUpdate: Partial<Task>) => {
     try {
-      const { data, error } = await supabase
-        .from('tasks')
-        .insert([
-          {
-            user_id: user?.id,
-            title: task.title,
-            description: task.description,
-            subject: task.subject,
-            due_date: task.dueDate,
-            status: task.status,
-            priority: task.priority,
-            estimated_minutes: task.estimatedMinutes,
-            completed_minutes: task.completedMinutes,
-          }
-        ])
-        .select()
-        .single();
-
-      if (error) {
-        throw error;
-      }
-
-      if (data) {
-        const newTask: Task = {
-          id: data.id,
-          title: data.title,
-          description: data.description,
-          subject: data.subject,
-          dueDate: new Date(data.due_date),
-          status: data.status as TaskStatus,
-          priority: data.priority as TaskPriority,
-          estimatedMinutes: data.estimated_minutes,
-          completedMinutes: data.completed_minutes,
-        };
-        setTasks([newTask, ...tasks]);
-        toast.success('Task added successfully!');
-      }
-    } catch (error) {
-      console.error('Error adding task:', error);
-      toast.error('Failed to add task');
-    }
-  };
-
-  const updateTask = async (updatedTask: Task) => {
-    try {
+      setIsLoading(true);
+      
+      // Transform task data to match Supabase schema
+      const updateData: any = {};
+      
+      if (taskUpdate.title !== undefined) updateData.title = taskUpdate.title;
+      if (taskUpdate.description !== undefined) updateData.description = taskUpdate.description;
+      if (taskUpdate.subject !== undefined) updateData.subject = taskUpdate.subject;
+      if (taskUpdate.dueDate !== undefined) updateData.due_date = taskUpdate.dueDate ? taskUpdate.dueDate.toISOString() : null;
+      if (taskUpdate.status !== undefined) updateData.status = taskUpdate.status;
+      if (taskUpdate.priority !== undefined) updateData.priority = taskUpdate.priority;
+      if (taskUpdate.estimatedMinutes !== undefined) updateData.estimated_minutes = taskUpdate.estimatedMinutes;
+      if (taskUpdate.completedMinutes !== undefined) updateData.completed_minutes = taskUpdate.completedMinutes;
+      
       const { error } = await supabase
         .from('tasks')
-        .update({
-          title: updatedTask.title,
-          description: updatedTask.description,
-          subject: updatedTask.subject,
-          due_date: updatedTask.dueDate,
-          status: updatedTask.status,
-          priority: updatedTask.priority,
-          estimated_minutes: updatedTask.estimatedMinutes,
-          completed_minutes: updatedTask.completedMinutes,
-        })
-        .eq('id', updatedTask.id);
+        .update(updateData)
+        .eq('id', id);
 
       if (error) {
         throw error;
       }
 
-      setTasks(tasks.map(task => task.id === updatedTask.id ? updatedTask : task));
-      toast.success('Task updated successfully!');
+      // Update local state
+      setTasks(prevTasks =>
+        prevTasks.map(task =>
+          task.id === id ? { ...task, ...taskUpdate } : task
+        )
+      );
+      
+      toast.success('Task updated successfully');
     } catch (error) {
       console.error('Error updating task:', error);
       toast.error('Failed to update task');
+    } finally {
+      setIsLoading(false);
     }
   };
 
   const deleteTask = async (id: string) => {
     try {
+      setIsLoading(true);
+      
       const { error } = await supabase
         .from('tasks')
         .delete()
@@ -153,96 +182,28 @@ export const TaskProvider: React.FC<{ children: React.ReactNode }> = ({ children
         throw error;
       }
 
-      setTasks(tasks.filter(task => task.id !== id));
-      toast.success('Task deleted successfully!');
+      // Update local state
+      setTasks(prevTasks => prevTasks.filter(task => task.id !== id));
+      
+      toast.success('Task deleted successfully');
     } catch (error) {
       console.error('Error deleting task:', error);
       toast.error('Failed to delete task');
-    }
-  };
-
-  const updateTaskStatus = async (id: string, status: TaskStatus) => {
-    try {
-      const taskToUpdate = tasks.find(task => task.id === id);
-      if (!taskToUpdate) return;
-      
-      let completedMinutes = taskToUpdate.completedMinutes;
-      if (status === 'completed') {
-        completedMinutes = taskToUpdate.estimatedMinutes;
-      }
-
-      const { error } = await supabase
-        .from('tasks')
-        .update({
-          status,
-          completed_minutes: completedMinutes,
-        })
-        .eq('id', id);
-
-      if (error) {
-        throw error;
-      }
-
-      setTasks(tasks.map(task => {
-        if (task.id === id) {
-          return { ...task, status, completedMinutes };
-        }
-        return task;
-      }));
-      toast.success('Task status updated!');
-    } catch (error) {
-      console.error('Error updating task status:', error);
-      toast.error('Failed to update task status');
-    }
-  };
-
-  const updateTaskProgress = async (id: string, completedMinutes: number) => {
-    try {
-      const taskToUpdate = tasks.find(task => task.id === id);
-      if (!taskToUpdate) return;
-      
-      let status = taskToUpdate.status;
-      if (completedMinutes >= taskToUpdate.estimatedMinutes) {
-        status = 'completed';
-      } else if (completedMinutes > 0) {
-        status = 'in-progress';
-      }
-
-      const { error } = await supabase
-        .from('tasks')
-        .update({
-          status,
-          completed_minutes: completedMinutes,
-        })
-        .eq('id', id);
-
-      if (error) {
-        throw error;
-      }
-
-      setTasks(tasks.map(task => {
-        if (task.id === id) {
-          return { ...task, status, completedMinutes };
-        }
-        return task;
-      }));
-      toast.success('Progress updated!');
-    } catch (error) {
-      console.error('Error updating task progress:', error);
-      toast.error('Failed to update progress');
+    } finally {
+      setIsLoading(false);
     }
   };
 
   return (
-    <TaskContext.Provider value={{ 
-      tasks, 
-      addTask, 
-      updateTask, 
-      deleteTask, 
-      updateTaskStatus, 
-      updateTaskProgress,
-      isLoading
-    }}>
+    <TaskContext.Provider
+      value={{
+        tasks,
+        addTask,
+        updateTask,
+        deleteTask,
+        isLoading,
+      }}
+    >
       {children}
     </TaskContext.Provider>
   );
