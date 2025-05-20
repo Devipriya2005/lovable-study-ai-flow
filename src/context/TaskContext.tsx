@@ -77,13 +77,14 @@ export const TaskProvider = ({ children }: { children: React.ReactNode }) => {
   const addTask = async (task: Omit<Task, 'id'>) => {
     try {
       // Fix: Convert task to the format expected by Supabase
+      // Convert Date object to ISO string for Supabase
       const taskData = {
         title: task.title,
         description: task.description,
         subject: task.subject,
         status: task.status,
         priority: task.priority,
-        due_date: task.dueDate,
+        due_date: task.dueDate ? task.dueDate.toISOString() : null,
         estimated_minutes: task.estimatedMinutes,
         completed_minutes: task.completedMinutes,
         user_id: user?.id
@@ -91,7 +92,7 @@ export const TaskProvider = ({ children }: { children: React.ReactNode }) => {
 
       const { data, error } = await supabase
         .from('tasks')
-        .insert(taskData) // Fixed: Pass a single object, not an array
+        .insert(taskData)
         .select();
 
       if (error) {
@@ -129,7 +130,7 @@ export const TaskProvider = ({ children }: { children: React.ReactNode }) => {
       if (updatedTask.subject !== undefined) updateData.subject = updatedTask.subject;
       if (updatedTask.status !== undefined) updateData.status = updatedTask.status;
       if (updatedTask.priority !== undefined) updateData.priority = updatedTask.priority;
-      if (updatedTask.dueDate !== undefined) updateData.due_date = updatedTask.dueDate;
+      if (updatedTask.dueDate !== undefined) updateData.due_date = updatedTask.dueDate ? updatedTask.dueDate.toISOString() : null;
       if (updatedTask.estimatedMinutes !== undefined) updateData.estimated_minutes = updatedTask.estimatedMinutes;
       if (updatedTask.completedMinutes !== undefined) updateData.completed_minutes = updatedTask.completedMinutes;
       

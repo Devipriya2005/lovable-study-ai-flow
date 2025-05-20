@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { TaskCard } from './TaskCard';
 import { useTasks } from '../context/TaskContext';
@@ -28,13 +29,17 @@ export function TaskList() {
     const searchLower = searchTerm.toLowerCase();
     return (
       task.title.toLowerCase().includes(searchLower) ||
-      task.description.toLowerCase().includes(searchLower) ||
+      (task.description && task.description.toLowerCase().includes(searchLower)) ||
       task.subject.toLowerCase().includes(searchLower)
     );
   });
   
   const sortedTasks = [...filteredTasks].sort((a, b) => {
     if (sortBy === 'dueDate') {
+      // Handle potential undefined dueDate values
+      if (!a.dueDate && !b.dueDate) return 0;
+      if (!a.dueDate) return 1;
+      if (!b.dueDate) return -1;
       return a.dueDate.getTime() - b.dueDate.getTime();
     }
     if (sortBy === 'priority') {

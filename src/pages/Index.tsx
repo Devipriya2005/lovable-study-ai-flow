@@ -8,8 +8,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 const Index = () => {
   return (
-    <TaskProvider>
-      <Layout>
+    <Layout>
+      <TaskProvider>
         <div className="mb-8">
           <h1 className="text-3xl font-bold mb-2">Study Planner</h1>
           <p className="text-muted-foreground">Organize your study schedule and track your progress</p>
@@ -36,8 +36,8 @@ const Index = () => {
             <TaskList />
           </TabsContent>
         </Tabs>
-      </Layout>
-    </TaskProvider>
+      </TaskProvider>
+    </Layout>
   );
 };
 
